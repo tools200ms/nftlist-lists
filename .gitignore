@@ -8,6 +8,8 @@ sandbox/pipes/*
 *.log
 *.mo
 
+ngtlist-lists/data
+
 # Igonore compiled Python bytecode or other temporary files
 # gnerated by Python
 *~
