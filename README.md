@@ -4,7 +4,8 @@ The lists of IP servers of a popular services, such as GitHub, Cloudflare, etc.
 
 It's a simple plain text list with one IPv4/IPv6 address per line. Comments starts with `#`, a list can have empty lines for readability.
 
-The list is mainained for [nftlist](https://github.com/tools200ms/nftlist) tool.
+The list is a part of [nftlist](https://github.com/tools200ms/nftlist) tool. However it can be installed separatly with pip or just downloaded.
+
 
 Covered services: 
 - Bitbucket/Atlassian IPs

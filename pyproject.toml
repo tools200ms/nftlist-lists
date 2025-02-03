@@ -1,0 +1,32 @@
+
+[tool.poetry]
+name = "nftlist-lists"
+version = "1.0.0"
+description = "Public services IP list for Nftlist (and not only)."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Mateusz (Barnaba) Piwek", email = "barnaba@200ms.net" }
+]
+urls = { "Homepage" = "https://github.com/tools200ms/nftlist-lists" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+
+[tool.poetry.scripts]
+install-nftlists = "nftlist_lists.install:main"
+
+[tool.poetry.include]
+"data/*" = ""
+
+[tool.setuptools.package-data]
+"nftlist-lists" = ["data/*"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
