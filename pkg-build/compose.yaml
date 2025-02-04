@@ -8,5 +8,6 @@ services:
       - ./build_packages.sh:/build/build_packages.sh:ro  # Share script (read-only)
       - ../pkgs:/build/dist  # Share built packages
       - ../nftlist-lists/data:/build/data:ro  # Share package content (read-only)
+      - ./KEYS/alpine-pkg-sig-privat.rsa:/home/user/alpine-pkg-sig-privat.rsa:ro
     working_dir: /build
     command: ["/bin/sh"]

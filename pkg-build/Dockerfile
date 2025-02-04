@@ -1,6 +1,8 @@
 # Start with a minimal Alpine base image
 FROM 200ms/alpinenet_dev2:latest AS builder
 
+ENV FEATURE="dev2fs"
+
 # Install required build tools
 RUN apk add --no-cache \
     dpkg dpkg-dev rpm build-base abuild fakeroot tar gzip

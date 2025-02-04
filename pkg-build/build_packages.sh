@@ -3,7 +3,14 @@
   set -xe || set -e
 
 PACKAGE_NAME="nftlist-lists"
+PROGRAM_URL="https://github.com/tools200ms/nftlist-lists"
 VERSION="1.0"
+LICENSE="MIT"
+
+DESCRIPTION="Public services IP list for Nftlist (and not only)."
+CONTRIBUTOR="Mateusz Piwek <barnaba@200ms.net>"
+MAINTAINER="Mateusz Piwek <barnaba@200ms.net>"
+
 ARCH="all"  # Change if architecture-specific
 INSTALL_DIR="/var/lib/nftlist"
 BUILD_DIR="$(pwd)/build"
@@ -32,8 +39,8 @@ cat <<EOF > "$DEB_DIR/DEBIAN/control"
 Package: $PACKAGE_NAME
 Version: $VERSION
 Architecture: $ARCH
-Maintainer: You <you@example.com>
-Description: NFT List Storage
+Maintainer: $CONTRIBUTOR
+Description: $DESCRIPTION
 EOF
 
 dpkg-deb --build "$DEB_DIR" "$DIST_DIR/${PACKAGE_NAME}_${VERSION}.deb"
@@ -41,27 +48,58 @@ dpkg-deb --build "$DEB_DIR" "$DIST_DIR/${PACKAGE_NAME}_${VERSION}.deb"
 # ---- 3️⃣ Build Alpine Package (.apk) ----
 APK_DIR="$BUILD_DIR/alpine"
 mkdir -p "$APK_DIR" "$APK_DIR/$INSTALL_DIR"
-cp -r "$BUILD_DIR/$INSTALL_DIR" "$APK_DIR/$INSTALL_DIR"
+cp -r "$BUILD_DIR/$INSTALL_DIR" "$APK_DIR/"
 
 cat <<EOF > "$APK_DIR/APKBUILD"
-# Contributor: You <you@example.com>
-# Maintainer: You <you@example.com>
+# Contributor: $CONTRIBUTOR
+# Maintainer: $MAINTAINER
 pkgname=$PACKAGE_NAME
 pkgver=$VERSION
 pkgrel=0
-pkgdesc="NFT List Storage"
+pkgdesc="$DESCRIPTION"
 arch="all"
-license="GPL"
+license="$LICENSE"
+url="$PROGRAM_URL"
 depends=""
-source="data/*"
+source="
+$(cd $APK_DIR; find . -type f ! -name APKBUILD | cut -c 3-)
+"
 build() { return 0; }
 package() {
     install -d "\$pkgdir/$INSTALL_DIR"
     cp -r "$BUILD_DIR/$INSTALL_DIR" "\$pkgdir/$INSTALL_DIR"
 }
+sha512sums="
+$(cd $APK_DIR; find . -type f ! -name APKBUILD -exec sha512sum {} \; | sed 's| ./||')
+"
+EOF
+
+apk_key_path="/home/user/alpine-pkg-sig-privat.rsa"
+
+cat <<EOF > /home/user/.abuild/abuild.conf
+# Automatically generated abuild configuration file
+
+# Define the RSA signing key
+PACKAGER_PRIVKEY="$apk_key_path"
+
+# Set the packager name and email (customize as needed)
+PACKAGER="Your Name <your.email@example.com>"
+
+# Define other build options if needed
+JOBS=4  # Adjust based on CPU cores for faster builds
+
+# Uncomment to enable debug mode
+# DEBUG=1
 EOF
 
 chown -R user $APK_DIR
+
+if [ ! -f "$apk_key_path" ]; then
+  echo "Apk key has not been found, add or generate with 'abuild-keygen'"
+  echo "Expectet key location: $apk_key_path"
+  exit 2
+fi
+
 su user -c "abuild -r -C $APK_DIR"
 
 mv "$APK_DIR"/*.apk "$DIST_DIR/"
@@ -77,7 +115,7 @@ Name: $PACKAGE_NAME
 Version: $VERSION
 Release: 1%{?dist}
 Summary: NFT List Storage
-License: GPL
+License: $LICENSE
 BuildArch: noarch
 Source0: ${PACKAGE_NAME}-${VERSION}.tar.gz
 
