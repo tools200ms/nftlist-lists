@@ -74,7 +74,17 @@ $(cd $APK_DIR; find . -type f ! -name APKBUILD -exec sha512sum {} \; | sed 's| .
 "
 EOF
 
-apk_key_path="/home/user/alpine-pkg-sig-privat.rsa"
+apk_key_path="$PKG_ALPINE_SIG_KEY_PATH"
+
+if [ ! -e $(dirname ${apk_key_path}) ]; then
+  mkdir -p "/home/user/.abuild/"
+elif [ -d $(dirname ${apk_key_path}) ]; then
+  # ensure access to '.abuild' directory
+  chown user:user $(dirname ${apk_key_path})
+else
+  echo "File: '/home/user/.abuild/' must be a directory."
+  exit 4
+fi
 
 cat <<EOF > /home/user/.abuild/abuild.conf
 # Automatically generated abuild configuration file
@@ -103,6 +113,7 @@ fi
 su user -c "abuild -r -C $APK_DIR"
 
 mv "$APK_DIR"/*.apk "$DIST_DIR/"
+
 
 # ---- 4️⃣ Build Fedora RPM (.rpm) ----
 RPM_DIR="$BUILD_DIR/rpm"

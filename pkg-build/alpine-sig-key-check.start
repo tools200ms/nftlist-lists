@@ -1,0 +1,34 @@
+#/bin/sh
+
+if [ -z "${PKG_ALPINE_SIG_KEY_PATH}" ]; then
+    cat <<EOF > /dev/stdout
+Variable 'PKG_ALPINE_SIG_KEY_PATH' has not been defined.
+EOF
+    exit 0
+fi
+
+if [ ! -f "${PKG_ALPINE_SIG_KEY_PATH}" ];
+then
+    cat <<EOF > /dev/stdout
+
+Alpine signing key has not been found.
+
+Ensure key is in a following path:
+    ${PKG_ALPINE_SIG_KEY_PATH}
+
+Signing Key can be generated with following command:
+    su user -c 'abuild-keygen -a -i'
+
+Ensure KEY stays private!!!
+
+EOF
+else
+    cat <<EOF > /dev/stdout
+Alpine signing key is in:
+${PKG_ALPINE_SIG_KEY_PATH}
+
+Good.
+EOF
+fi
+
+exit 0

@@ -3,11 +3,19 @@ version: '3.8'
 services:
   package-builder:
     build: .
-    container_name: package-builder
+    #container_name: package_builder
+#    environment:
+#      DEBUG: 'Y'
     volumes:
       - ./build_packages.sh:/build/build_packages.sh:ro  # Share script (read-only)
-      - ../pkgs:/build/dist  # Share built packages
+      - ../pkgs:/build.dist  # Share built packages
       - ../nftlist-lists/data:/build/data:ro  # Share package content (read-only)
-      - ./KEYS/alpine-pkg-sig-privat.rsa:/home/user/alpine-pkg-sig-privat.rsa:ro
-    working_dir: /build
-    command: ["/bin/sh"]
+      - ../KEYS/alpine-pkg-SIG.rsa:/home/user/.abuild/SIG-KEY.rsa:ro
+      - ../KEYS/alpine-pkg-SIG.rsa.pub:/home/user/.abuild/SIG-KEY.rsa.pub:ro
+      # For debugging:
+      - ./alpine-sig-key-check.start:/etc/local.d/alpine-sig-key-check.start:ro
+
+    cap_add: ['SYS_ADMIN']
+    devices:
+      - /dev/fuse
+
