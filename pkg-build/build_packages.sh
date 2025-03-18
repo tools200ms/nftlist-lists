@@ -50,7 +50,11 @@ APK_DIR="$BUILD_DIR/alpine"
 mkdir -p "$APK_DIR" "$APK_DIR/$INSTALL_DIR"
 cp -r "$BUILD_DIR/$INSTALL_DIR" "$APK_DIR/"
 
-cat <<EOF > "$APK_DIR/APKBUILD"
+# $(cd $APK_DIR; find . -type f ! -name APKBUILD | cut -c 3-)
+
+cd ${APK_DIR}
+
+cat <<EOF > "./APKBUILD"
 # Contributor: $CONTRIBUTOR
 # Maintainer: $MAINTAINER
 pkgname=$PACKAGE_NAME
@@ -61,16 +65,16 @@ arch="all"
 license="$LICENSE"
 url="$PROGRAM_URL"
 depends=""
-source="
-$(cd $APK_DIR; find . -type f ! -name APKBUILD | cut -c 3-)
+makedepends=""
+source="nftlist/*
 "
 build() { return 0; }
+
 package() {
-    install -d "\$pkgdir/$INSTALL_DIR"
-    cp -r "$BUILD_DIR/$INSTALL_DIR" "\$pkgdir/$INSTALL_DIR"
+$(cd $APK_DIR/nftlist; find * -name "*.list" -type f -exec echo "install -Dm755 \"\$srcdir/{}\" \"\$pkgdir/var/lib/nftlist/{}\"" \;)
 }
-sha512sums="
-$(cd $APK_DIR; find . -type f ! -name APKBUILD -exec sha512sum {} \; | sed 's| ./||')
+
+sha512sums="$(cd $APK_DIR/nftlist; find * -type f -exec sha512sum {} \;)
 "
 EOF
 
@@ -102,7 +106,7 @@ JOBS=4  # Adjust based on CPU cores for faster builds
 # DEBUG=1
 EOF
 
-chown -R user $APK_DIR
+chown -R user:user ${APK_DIR}
 
 if [ ! -f "$apk_key_path" ]; then
   echo "Apk key has not been found, add or generate with 'abuild-keygen'"
@@ -110,9 +114,14 @@ if [ ! -f "$apk_key_path" ]; then
   exit 2
 fi
 
-su user -c "abuild -r -C $APK_DIR"
+su user -c "abuild-keygen -a -n"
+su user -c "abuild -r -C ${APK_DIR} && abuild clean -C ${APK_DIR}" || res=$?
 
-mv "$APK_DIR"/*.apk "$DIST_DIR/"
+if [ $res -ne 0 ]; then
+  echo "ERROR at APK buiild, but ignorring."
+fi
+
+find /home/user/packages/build/ -name '*.apk' -exec mv {} "${DIST_DIR}/" \;
 
 
 # ---- 4️⃣ Build Fedora RPM (.rpm) ----
