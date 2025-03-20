@@ -12,28 +12,33 @@ CONTRIBUTOR="Mateusz Piwek <barnaba@200ms.net>"
 MAINTAINER="Mateusz Piwek <barnaba@200ms.net>"
 
 ARCH="all"  # Change if architecture-specific
-INSTALL_DIR="/var/lib/nftlist"
+INSTALL_DIR="var/lib/nftlist"
 BUILD_DIR="$(pwd)/build"
 DIST_DIR="$(pwd)/dist"
+# To be always used with '*' asterix!:
+#
 FILES_TO_INSTALL="$(pwd)/data/*"  # Modify to include the actual files
+FILES_TO_INSTALL_SHA="$(find $FILES_TO_INSTALL -printf '%P\n' -name "*.list" -type f -exec echo "install -Dm755 \"\$srcdir/{}\" \"\$pkgdir/var/lib/nftlist/{}\"" \;)"
 
 # Ensure directories exist
 rm -rf "$BUILD_DIR" "$DIST_DIR/*"
-mkdir -p "$BUILD_DIR/$INSTALL_DIR" "$DIST_DIR"
-
-# Copy files to build directory
-cp -r $FILES_TO_INSTALL "$BUILD_DIR/$INSTALL_DIR/"
+#mkdir -p "$BUILD_DIR/$INSTALL_DIR" "$DIST_DIR"
 
 echo "📦 Building packages for $PACKAGE_NAME version $VERSION"
 
 # ---- 1️⃣ Build .tar.gz ----
 echo "🗜️ Creating tar.gz package..."
-tar czf "$DIST_DIR/${PACKAGE_NAME}-${VERSION}.tar.gz" -C "$BUILD_DIR" .
+TAR_DIR="$BUILD_DIR/tar"
+# Copy files to build directory
+mkdir -p "${TAR_DIR}/$INSTALL_DIR"
+cp -r $FILES_TO_INSTALL "${TAR_DIR}/${INSTALL_DIR}/"
+
+tar czf "$DIST_DIR/${PACKAGE_NAME}-${VERSION}.tar.gz" -C "$TAR_DIR" .
 
 # ---- 2️⃣ Build Debian Package (.deb) ----
-DEB_DIR="$BUILD_DIR/debian"
-mkdir -p "$DEB_DIR/DEBIAN" "$DEB_DIR/$INSTALL_DIR"
-cp -r "$BUILD_DIR/$INSTALL_DIR" "$DEB_DIR/$INSTALL_DIR"
+DEB_DIR="$BUILD_DIR/deb"
+mkdir -p "$DEB_DIR/DEBIAN"
+cp -r $TAR_DIR/* "$DEB_DIR/"
 
 cat <<EOF > "$DEB_DIR/DEBIAN/control"
 Package: $PACKAGE_NAME
@@ -46,9 +51,9 @@ EOF
 dpkg-deb --build "$DEB_DIR" "$DIST_DIR/${PACKAGE_NAME}_${VERSION}.deb"
 
 # ---- 3️⃣ Build Alpine Package (.apk) ----
-APK_DIR="$BUILD_DIR/alpine"
-mkdir -p "$APK_DIR" "$APK_DIR/$INSTALL_DIR"
-cp -r "$BUILD_DIR/$INSTALL_DIR" "$APK_DIR/"
+APK_DIR="$BUILD_DIR/apk"
+mkdir -p "$APK_DIR"
+#cp -r $FILES_TO_INSTALL "$APK_DIR/${PACKAGE_NAME}/"
 
 # $(cd $APK_DIR; find . -type f ! -name APKBUILD | cut -c 3-)
 
@@ -66,15 +71,44 @@ license="$LICENSE"
 url="$PROGRAM_URL"
 depends=""
 makedepends=""
-source="nftlist/*
+source="$FILES_TO_INSTALL
 "
 build() { return 0; }
+
+check() {
+    for file in "$srcdir"/${PACKAGE_NAME}/*; do
+        if [ -f "$file" ]; then
+            echo "Testing: $file"
+
+            # Check if file is empty
+            if [ ! -s "$file" ]; then
+                echo "Test failed: $file is empty"
+                return 1
+            fi
+
+            # Check if file is a text file
+            if ! file "$file" | grep -q "text"; then
+                echo "Test failed: $file is not a text file"
+                return 1
+            fi
+
+            # Count lines in file
+            line_count=$(wc -l < "$file")
+
+            if [ "$line_count" -le 2 ] || [ "$line_count" -ge 100000 ]; then
+                echo "Test failed: $file has illegal line no ($line_count)"
+                return 1
+            fi
+        fi
+    done
+}
+
 
 package() {
 $(cd $APK_DIR/nftlist; find * -name "*.list" -type f -exec echo "install -Dm755 \"\$srcdir/{}\" \"\$pkgdir/var/lib/nftlist/{}\"" \;)
 }
 
-sha512sums="$(cd $APK_DIR/nftlist; find * -type f -exec sha512sum {} \;)
+sha512sums="$(cd $APK_DIR/src; find * -type f -exec sha512sum {} \;)
 "
 EOF
 
@@ -124,11 +158,13 @@ fi
 find /home/user/packages/build/ -name '*.apk' -exec mv {} "${DIST_DIR}/" \;
 
 
+exit 0
+
 # ---- 4️⃣ Build Fedora RPM (.rpm) ----
 RPM_DIR="$BUILD_DIR/rpm"
-mkdir -p "$RPM_DIR/{BUILD,RPMS,SOURCES,SPECS,SRPMS}" "$RPM_DIR/$INSTALL_DIR"
+mkdir -p ${RPM_DIR}/{BUILD,RPMS,SOURCES,SPECS,SRPMS} "$RPM_DIR/$INSTALL_DIR"
 cp -r "$BUILD_DIR/$INSTALL_DIR" "$RPM_DIR/$INSTALL_DIR"
-tar czf "$RPM_DIR/SOURCES/${PACKAGE_NAME}-${VERSION}.tar.gz" -C "$BUILD_DIR" .
+tar czf ${RPM_DIR}/SOURCES/${PACKAGE_NAME}-${VERSION}.tar.gz -C "${BUILD_DIR}" .
 
 cat <<EOF > "$RPM_DIR/SPECS/${PACKAGE_NAME}.spec"
 Name: $PACKAGE_NAME
