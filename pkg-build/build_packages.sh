@@ -105,7 +105,7 @@ check() {
 
 
 package() {
-$(cd $APK_DIR/nftlist; find * -name "*.list" -type f -exec echo "install -Dm755 \"\$srcdir/{}\" \"\$pkgdir/var/lib/nftlist/{}\"" \;)
+$(cd ${APK_DIR}/nftlist; find * -name "*.list" -type f -exec echo "install -Dm755 \"\$srcdir/{}\" \"\$pkgdir/var/lib/nftlist/{}\"" \;)
 }
 
 sha512sums="$(cd $APK_DIR/src; find * -type f -exec sha512sum {} \;)

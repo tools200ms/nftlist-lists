@@ -7,9 +7,9 @@ services:
 #    environment:
 #      DEBUG: 'Y'
     volumes:
-      - ./build_packages.sh:/build/build_packages.sh:ro  # Share script (read-only)
-      - ../pkgs:/build.dist  # Share built packages
-      - ../nftlist-lists/data:/build/data:ro  # Share package content (read-only)
+      - ./build_packages.sh:/packages/build_packages.sh:ro  # Share script (read-only)
+      - ../pkgs:/packages.dist  # Share built packages
+      - ../nftlist-lists/data:/packages/data:ro  # Share package content (read-only)
       - ../KEYS/alpine-pkg-SIG.rsa:/home/user/.abuild/SIG-KEY.rsa:ro
       - ../KEYS/alpine-pkg-SIG.rsa.pub:/home/user/.abuild/SIG-KEY.rsa.pub:ro
       # For debugging:
